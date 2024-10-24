@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Text Extractor</title>
+    
+    <!-- Bootstrap 5.0.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        #imagePreview {
+            display: none;
+            width: 300px; 
+            height: auto; 
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            white-space: pre-wrap;
+            position: relative; /* Enable positioning for the copy button */
+        }
+        .spinner-grow {
+            display: none; 
+        }
+        #copyButton {
+            position: absolute; /* Position the button absolutely */
+            top: 10px; /* Distance from the top */
+            right: 10px; /* Distance from the right */
+        }
+        .warn {
+            display: none;
+            color: red; /* Set text color to red */
+            margin-top: 10px; /* Add some margin */
+        }
+        .copySuccess {
+            display: none;
+            color: green; /* Set text color to red */
+            margin-top: 10px; /* Add some margin */
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h1 class="card-title mb-4">Upload Image to Extract Text</h1>
+                        
+                        <!-- File input -->
+                        <div class="mb-3">
+                            <input type="file" id="imageInput" class="form-control" accept="image/*">
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <img id="imagePreview" class="img-fluid img-thumbnail" src="" alt="Image Preview">
+                        <br>
+                        
+                        <!-- Button to extract text -->
+                        <button id="extractTextButton" class="btn btn-primary mt-4">Extract Text</button>
+                        <div class="spinner-grow text-primary mt-2" role="status" id="loadingSpinner">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        
+                        <!-- Result -->
+                        <div id="result" class="alert alert-secondary mt-4" role="alert">
+                            <button id="copyButton" class="btn btn-outline-secondary btn-sm"><i class="bi bi-copy"></i><div id="copySuccess" class="copySuccess"> <i class="bi bi-clipboard-check"></i></div><div id="warn" class="warn"> <i class="bi bi-exclamation-circle"></i></div></button>
+                            <span id="resultText"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-JP6tTFt5kt+H8OsUGZpmuX7XnORhdPHiKx6HcJ47k2Y1Wk4xJUM6j6C5yWXf2Tej" crossorigin="anonymous"></script>
+
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+    
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const resultText = document.getElementById('resultText');
+        const extractTextButton = document.getElementById('extractTextButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const warn = document.getElementById('warn');
+        const copyButton = document.getElementById('copyButton');
+        let selectedImage = null;
+        const copySuccess = document.getElementById('copySuccess');
+
+        
+
+        // Show a preview of the selected image
+        const showImagePreview = (file) => {
+            imagePreview.style.display = "block";
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                selectedImage = file;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showImagePreview(file);
+            }
+        });
+
+        // Extract text when the button is clicked
+        extractTextButton.addEventListener('click', async function() {
+            if (!selectedImage) {
+                resultText.textContent = "Please select an image first.";
+                return;
+            }
+
+            extractTextButton.disabled = true; 
+            loadingSpinner.style.display = "block"; 
+            resultText.textContent = ""; 
+
+            try {
+                const { data: { text } } = await Tesseract.recognize(
+                    selectedImage,
+                    'eng',
+                );
+                resultText.textContent = text;
+            } catch (err) {
+                resultText.textContent = "Error extracting text. Please try again.";
+                console.error(err);
+            } finally {
+                extractTextButton.disabled = false; 
+                loadingSpinner.style.display = "none"; 
+            }
+        });
+
+        // Copy text to clipboard when the Copy button is clicked
+        copyButton.addEventListener('click', function() {
+            const textToCopy = resultText.textContent;
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    copySuccess.style.display = "inline";
+                }).catch(err => {
+                    console.error('Could not copy text: ', err);
+                });
+            } else {
+                warn.style.display = "inline";
+            }
+        });
+    </script>
+</body>
+</html>
