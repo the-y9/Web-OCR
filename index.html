@@ -47,12 +47,15 @@
             <div class="col-lg-6">
                 <div class="card shadow-sm">
                     <div class="card-body text-center">
-                        <h1 class="card-title mb-4">Upload Image to Extract Text</h1>
+                        <h1 class="card-title mb-4">Upload or Paste Image to Extract Text</h1>
                         
                         <!-- File input -->
                         <div class="mb-3">
                             <input type="file" id="imageInput" class="form-control" accept="image/*">
                         </div>
+                        
+                        <!-- Paste Image Button -->
+                        <button id="pasteImageButton" class="btn btn-info mt-2">Paste Image from Clipboard</button>
                         
                         <!-- Image Preview -->
                         <img id="imagePreview" class="img-fluid img-thumbnail" src="" alt="Image Preview">
@@ -89,10 +92,9 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         const warn = document.getElementById('warn');
         const copyButton = document.getElementById('copyButton');
+        const pasteImageButton = document.getElementById('pasteImageButton');
         let selectedImage = null;
         const copySuccess = document.getElementById('copySuccess');
-
-        
 
         // Show a preview of the selected image
         const showImagePreview = (file) => {
@@ -150,6 +152,23 @@
             } else {
                 warn.style.display = "inline";
             }
+        });
+
+        // Paste an image from the clipboard
+        pasteImageButton.addEventListener('click', function() {
+            navigator.clipboard.read().then(async (clipboardItems) => {
+                for (const item of clipboardItems) {
+                    if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                        const blob = await item.getType('image/png'); // Or 'image/jpeg'
+                        const imageUrl = URL.createObjectURL(blob);
+                        showImagePreview(blob);
+                        selectedImage = blob;  // Set the pasted image as the selected image
+                    }
+                }
+            }).catch(err => {
+                resultText.textContent = "No image found in clipboard.";
+                console.error(err);
+            });
         });
     </script>
 </body>
