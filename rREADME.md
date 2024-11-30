@@ -48,3 +48,4 @@ To run the project locally, follow these steps:
 
 - [Tesseract.js](https://github.com/tesseract-ocr/tesseract.js) for OCR functionality.
 - [Bootstrap](https://getbootstrap.com/) for styling and responsive design.
+  
